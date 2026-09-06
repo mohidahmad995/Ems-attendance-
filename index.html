@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PARADISE MEDICAL SERVISE</title>
+<style>
+:root{--navy:#081b4b;--blue:#123b9b;--sky:#eef4ff;--text:#182033;--muted:#6d7890;--green:#159447;--red:#d83a3a;--line:#e2e7f0}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:#f4f7fb;color:var(--text)}
+.hidden{display:none!important}.login{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(135deg,#061743,#123b9b)}
+.login-card{width:min(430px,100%);background:#fff;border-radius:24px;padding:34px;box-shadow:0 25px 70px #00143d55}
+.login h1{text-align:center;margin:0 0 7px;color:var(--navy)}.login p{text-align:center;color:var(--muted)}
+label{display:block;font-size:13px;font-weight:700;margin:14px 0 7px}
+input,select{width:100%;padding:12px 13px;border:1px solid #d6ddea;border-radius:10px;font-size:14px;outline:none;background:#fff}
+button{border:0;border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff}
+button.secondary{background:#edf2fb;color:#19346f}button.danger{background:var(--red)}button.green{background:var(--green)}
+.app{min-height:100vh}.top{height:70px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 28px}
+.brand{font-weight:800;font-size:18px}.layout{display:grid;grid-template-columns:235px 1fr;min-height:calc(100vh - 70px)}
+.side{background:#fff;border-right:1px solid var(--line);padding:20px 14px}.side button{display:block;width:100%;text-align:left;background:transparent;color:#34415e;margin:4px 0}.side button.active,.side button:hover{background:var(--sky);color:var(--blue)}
+.main{padding:28px;max-width:1500px;width:100%;margin:auto}.title{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:22px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:19px;box-shadow:0 5px 20px #142a5010}
+.stat{font-size:27px;font-weight:800;margin-top:7px}.greenText{color:var(--green)}.blueText{color:var(--blue)}.redText{color:var(--red)}
+.muted{color:var(--muted);font-size:13px}.table-wrap{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:15px}
+table{border-collapse:collapse;width:100%;min-width:760px}th,td{padding:12px 13px;border-bottom:1px solid #edf0f5;text-align:left;font-size:13px}th{background:#f7f9fc;color:#58647c}
+.actions{display:flex;gap:7px;flex-wrap:wrap}.badge{display:inline-block;padding:5px 8px;border-radius:20px;font-size:11px;font-weight:800}
+.present{background:#e7f7ed;color:#12803d}.absent{background:#ffecec;color:#bd3030}.working{background:#fff4db;color:#9a6900}.warning{background:#fff7d6;color:#9a6700}.strike{background:#ffe4e4;color:#b42318}.status-active{background:#e7f7ed;color:#12803d}.status-most{background:#e9e7ff;color:#4c3fbf}.status-inactive{background:#f1f3f5;color:#667085}.note{padding:10px 12px;border-radius:10px;background:#f8fafc;border:1px solid var(--line);margin-top:10px;font-size:13px}
+.modal{position:fixed;inset:0;background:#081b4b66;display:grid;place-items:center;padding:20px;z-index:5}.modal-card{width:min(500px,100%);background:#fff;border-radius:18px;padding:24px}
+.modal-head{display:flex;justify-content:space-between;align-items:center}.toast{position:fixed;right:22px;bottom:22px;background:#15223e;color:#fff;padding:13px 16px;border-radius:10px;display:none;z-index:9}
+.clock{font-weight:800;color:var(--blue)}.error{color:#c62828;background:#fff0f0;padding:10px;border-radius:9px;font-size:13px;margin-top:14px}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.side{border-right:0;border-bottom:1px solid var(--line);display:flex;overflow:auto;padding:8px}.side button{min-width:max-content;width:auto}.grid{grid-template-columns:repeat(2,1fr)}.main{padding:18px}}
+@media(max-width:520px){.grid{grid-template-columns:1fr}.title{align-items:flex-start;flex-direction:column}.top{padding:0 14px}}
+</style>
+</head>
+<body>
+<div id="login" class="login">
+ <div class="login-card">
+  <h1>PARADISE MEDICAL SERVISE</h1><p>PARADISE MEDICAL SERVISE Attendance & Management System</p>
+  <form id="loginForm">
+   <label>Username</label><input id="loginUser" required>
+   <label>Password</label><input id="loginPass" type="password" required>
+   <button style="width:100%;margin-top:18px">Sign In</button>
+   <div id="loginError" class="error hidden"></div>
+  </form>
+  <p style="font-size:12px">Admin: <b>management</b> / <b>1122</b></p>
+ </div>
+</div>
+
+<div id="app" class="app hidden">
+<header class="top"><div class="brand">PARADISE MEDICAL SERVISE</div><div><span id="topUser"></span> &nbsp; <button id="logout" class="secondary">Logout</button></div></header>
+<div class="layout"><aside class="side" id="sidebar"></aside><main class="main" id="main"></main></div>
+</div>
+<div id="modal" class="modal hidden"><div class="modal-card" id="modalCard"></div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+const KEY='emsAttendanceV2';
+let db=JSON.parse(localStorage.getItem(KEY)||'null');
+if(!db) db={users:[
+ {id:'admin',username:'paradise',password:'pms1234',name:'Management',role:'management',bonus:0},
+ {id:'EMP001',username:'mohid ahmad',password:'Mohid1@1',name:'Mohid Ahmad',role:'employee',bonus:0,status:'active',warnings:[],strikes:[],weeklyBonus:0}
+],attendance:[]};
+if(!db.attendance) db.attendance=[];
+if(!db.users) db.users=[];
+/* Fix accounts created by older versions. */
+db.users.forEach(u=>{
+  if(u.id!=='admin' && u.role==='paradise medical servise') u.role='employee';
+  if(u.username==='mohid ahmad' && u.id!=='admin') u.role='employee';
+  if(u.role==='employee'){
+    if(!['inactive','active','most'].includes(u.status))u.status='active';
+    if(!Array.isArray(u.warnings))u.warnings=[];
+    if(!Array.isArray(u.strikes))u.strikes=[];
+    if(typeof u.bonus!=='number')u.bonus=Number(u.bonus)||0;
+    if(typeof u.weeklyBonus!=='number')u.weeklyBonus=Number(u.weeklyBonus??u.bonus)||0;
+  }
+});
+function employeeStatus(u){return u.status||'active'}
+function statusBadge(st){return st==='most' ? '<span class="badge status-most">Most Active</span>' : st==='inactive' ? '<span class="badge status-inactive">Inactive</span>' : '<span class="badge status-active">Active</span>'}
+function warningCount(u){return Array.isArray(u.warnings)?u.warnings.length:0}
+function strikeCount(u){return Array.isArray(u.strikes)?u.strikes.length:0}
+function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+let session=null,page='dashboard';
+const $=id=>document.getElementById(id);
+function now(){return new Date()}
+function iso(d){return new Date(d).toISOString()}
+function dateKey(d=new Date()){let x=new Date(d.getTime()-d.getTimezoneOffset()*60000);return x.toISOString().slice(0,10)}
+function fmtDate(s){return new Date(s+'T00:00:00').toLocaleDateString()}
+function fmtTime(s){return s?new Date(s).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—'}
+function hoursBetween(a,b){return a&&b?Math.max(0,(new Date(b)-new Date(a))/3600000):0}
+function hm(h){let m=Math.round(h*60);return Math.floor(m/60)+'h '+String(m%60).padStart(2,'0')+'m'}
+function weekStart(s){let d=new Date(s+'T00:00:00'),day=d.getDay();d.setDate(d.getDate()+((day===0?-6:1)-day));return dateKey(d)}
+function weekDates(start){let a=[];for(let i=0;i<7;i++){let d=new Date(start+'T00:00:00');d.setDate(d.getDate()+i);a.push(dateKey(d))}return a}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function attRows(uid,date){return db.attendance.filter(x=>x.userId===uid&&x.date===date)}
+function openSession(uid,date){return [...attRows(uid,date)].reverse().find(x=>x.checkIn&&!x.checkOut)}
+function dayHours(uid,date){return attRows(uid,date).reduce((sum,x)=>sum+hoursBetween(x.checkIn,x.checkOut),0)}
+function currentUser(){return db.users.find(u=>u.id===session.id)}
+function toast(t){$('toast').textContent=t;$('toast').style.display='block';setTimeout(()=>$('toast').style.display='none',2200)}
+
+function render(){
+ if(!session){$('login').classList.remove('hidden');$('app').classList.add('hidden');return}
+ let u=currentUser(); if(!u){session=null;render();return}
+ $('login').classList.add('hidden');$('app').classList.remove('hidden');
+ $('topUser').textContent=u.name+' ('+u.role+')';
+ let items=session.role==='management'
+ ?[['dashboard','📊 Dashboard'],['employees','👥 Employees'],['attendance','⏱️ Attendance'],['weekly','📅 Weekly Report'],['discipline','⚠️ Strikes & Warnings'],['bonuses','💰 Bonuses']]
+ :[['dashboard','🏠 My Dashboard'],['attendance','⏱️ My Attendance'],['weekly','📅 My Weekly Report'],['myinfo','🎁 Bonus & Discipline']];
+ $('sidebar').innerHTML=items.map(x=>`<button class="${page===x[0]?'active':''}" onclick="page='${x[0]}';render()">${x[1]}</button>`).join('');
+ if(page==='dashboard')dashboard();else if(page==='employees')employees();else if(page==='attendance')attendance();else if(page==='discipline')discipline();else if(page==='bonuses')bonuses();else if(page==='myinfo')myInfo();else weekly();
+}
+
+function dashboard(){
+ let u=currentUser(),today=dateKey();
+ if(session.role==='employee'){
+  let open=openSession(u.id,today),sessions=attRows(u.id,today),week=weekDates(weekStart(today)),total=week.reduce((s,d)=>s+dayHours(u.id,d),0);
+  $('main').innerHTML=`
+   <div class="title"><div><h2>Welcome, ${esc(u.name)}</h2><div class="muted">${fmtDate(today)} · <span id="live" class="clock"></span></div></div></div>
+   <div class="grid">
+    <div class="card"><div class="muted">Today's Status</div><div class="stat ${open?'greenText':'blueText'}">${open?'Working':sessions.length?'Completed':'Not Checked In'}</div></div>
+    <div class="card"><div class="muted">Today's Total Hours</div><div class="stat">${hm(dayHours(u.id,today))}</div></div>
+    <div class="card"><div class="muted">This Week</div><div class="stat">${hm(total)}</div></div>
+    <div class="card"><div class="muted">My Status</div><div class="stat" style="font-size:19px">${statusBadge(employeeStatus(u))}</div></div>
+    <div class="card"><div class="muted">This Week Bonus</div><div class="stat greenText">Rs ${Number(u.weeklyBonus||u.bonus||0).toLocaleString()}</div></div>
+   </div>
+   <div class="card" style="margin-top:18px">
+    <h3>Attendance</h3><p class="muted">You can check in and check out multiple times during the same day.</p>
+    <div class="actions">
+     <button class="green" onclick="checkIn()" ${open?'disabled':''}>Check In</button>
+     <button class="danger" onclick="checkOut()" ${open?'':'disabled'}>Check Out</button>
+    </div>
+    <div style="margin-top:18px">${sessions.length?sessionTable(sessions):'No sessions today.'}</div>
+   </div>`;
+  setInterval(()=>{let e=$('live');if(e)e.textContent=new Date().toLocaleTimeString()},1000);
+ }else{
+  let emps=db.users.filter(x=>x.role==='employee'),present=emps.filter(u=>openSession(u.id,today)||attRows(u.id,today).some(x=>x.checkOut)).length;
+  let total=emps.reduce((s,u)=>s+dayHours(u.id,today),0);
+  $('main').innerHTML=`<div class="title"><div><h2>Management Dashboard</h2><div class="muted">${fmtDate(today)}</div></div><button onclick="openEmployee()">+ Add Employee</button></div>
+   <div class="grid"><div class="card"><div class="muted">Employees</div><div class="stat blueText">${emps.length}</div></div><div class="card"><div class="muted">Attendance Today</div><div class="stat greenText">${present}</div></div><div class="card"><div class="muted">Today's Total Hours</div><div class="stat">${hm(total)}</div></div><div class="card"><div class="muted">Active Now</div><div class="stat">${emps.filter(u=>openSession(u.id,today)).length}</div></div></div>
+   <div class="card" style="margin-top:18px"><h3>Today's Employees</h3>${employeeTable(today)}</div>
+   <div class="card" style="margin-top:18px"><h3>Employee Status & Discipline</h3>${statusTable()}</div>`;
+ }
+}
+function sessionTable(rows){return `<div class="table-wrap"><table><thead><tr><th>#</th><th>Check In</th><th>Check Out</th><th>Hours</th></tr></thead><tbody>${rows.map((x,i)=>`<tr><td>${i+1}</td><td>${fmtTime(x.checkIn)}</td><td>${fmtTime(x.checkOut)}</td><td>${hm(hoursBetween(x.checkIn,x.checkOut))}</td></tr>`).join('')}</tbody></table></div>`}
+function employeeTable(date){
+ let emps=db.users.filter(x=>x.role==='employee');
+ return `<div class="table-wrap"><table><thead><tr><th>Employee</th><th>Username</th><th>Check In</th><th>Check Out</th><th>Total Hours</th><th>Employee Status</th><th>Attendance</th></tr></thead><tbody>${emps.map(u=>{
+  let rows=attRows(u.id,date),open=openSession(u.id,date),last=[...rows].reverse()[0],h=dayHours(u.id,date);
+  return `<tr><td><b>${esc(u.name)}</b></td><td>${esc(u.username)}</td><td>${open?fmtTime(open.checkIn):last?fmtTime(last.checkIn):'—'}</td><td>${open?'—':last?fmtTime(last.checkOut):'—'}</td><td><b>${hm(h)}</b></td><td>${statusBadge(employeeStatus(u))}</td><td>${open?'<span class="badge working">Working</span>':rows.length?'<span class="badge present">Completed</span>':'<span class="badge absent">Absent</span>'}</td></tr>`
+ }).join('')}</tbody></table></div>`
+}
+function employees(){$('main').innerHTML=`<div class="title"><div><h2>Employees</h2><div class="muted">Add, edit or delete employee accounts.</div></div><button onclick="openEmployee()">+ Add Employee</button></div><div class="card">${employeeManageTable()}</div>`}
+function employeeManageTable(){let emps=db.users.filter(x=>x.role==='employee');return `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>Password</th><th>Status</th><th>Strikes</th><th>Warnings</th><th>Actions</th></tr></thead><tbody>${emps.map(u=>`<tr><td><b>${esc(u.name)}</b></td><td>${esc(u.username)}</td><td>${esc(u.password)}</td><td>
+ <select onchange="changeEmployeeStatus('${u.id}',this.value)">
+  <option value="inactive" ${u.status==='inactive'?'selected':''}>Inactive</option>
+  <option value="active" ${u.status==='active'||!u.status?'selected':''}>Active</option>
+  <option value="most" ${u.status==='most'?'selected':''}>Most Active</option>
+ </select>
+</td><td>${strikeCount(u)}</td><td>${warningCount(u)}</td><td><div class="actions"><button class="secondary" onclick="openEmployee('${u.id}')">Edit</button><button class="secondary" onclick="disciplineEmployee('${u.id}')">Manage</button><button type="button" class="danger" onclick="deleteEmployee('${u.id}')">Delete</button></div></td></tr>`).join('')}</tbody></table></div>`}
+function attendance(){
+ let u=currentUser();
+ if(session.role==='employee'){
+  let rows=db.attendance.filter(x=>x.userId===u.id).sort((a,b)=>b.date.localeCompare(a.date)||String(b.checkIn).localeCompare(String(a.checkIn)));
+  $('main').innerHTML=`<div class="title"><div><h2>My Attendance</h2><div class="muted">Complete attendance history</div></div></div><div class="card">${rows.length?`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Hours</th></tr></thead><tbody>${rows.map(a=>`<tr><td>${fmtDate(a.date)}</td><td>${fmtTime(a.checkIn)}</td><td>${fmtTime(a.checkOut)}</td><td>${hm(hoursBetween(a.checkIn,a.checkOut))}</td></tr>`).join('')}</tbody></table></div>`:'No attendance records yet.'}</div>`;
+ }else{
+  let date=$('attDate')?.value||dateKey();
+  $('main').innerHTML=`<div class="title"><div><h2>Attendance</h2><div class="muted">View employee attendance and total hours.</div></div></div><div class="toolbar"><label>Date</label><input id="attDate" type="date" value="${date}" onchange="attendance()"></div><div class="card">${employeeTable(date)}</div>`;
+ }
+}
+function weekly(){
+ let start=$('weekDate')?.value||weekStart(dateKey()),days=weekDates(start),emps=session.role==='employee'?[currentUser()]:db.users.filter(x=>x.role==='employee');
+ $('main').innerHTML=`<div class="title"><div><h2>${session.role==='employee'?'My Weekly Report':'Weekly Attendance Report'}</h2><div class="muted">Monday ${fmtDate(days[0])} → Sunday ${fmtDate(days[6])}</div></div><button class="secondary" onclick="window.print()">Print / Save PDF</button></div>
+ <label>Week starting Monday</label><input id="weekDate" type="date" value="${start}" onchange="weekly()">
+ <div class="card" style="margin-top:16px"><div class="table-wrap"><table><thead><tr><th>Employee</th>${days.map(d=>`<th>${new Date(d+'T00:00:00').toLocaleDateString([], {weekday:'short'})}<br>${new Date(d+'T00:00:00').getDate()}</th>`).join('')}<th>Weekly Total</th></tr></thead><tbody>${emps.map(u=>{let total=days.reduce((s,d)=>s+dayHours(u.id,d),0);return `<tr><td><b>${esc(u.name)}</b><br><span class="muted">${esc(u.username)}</span></td>${days.map(d=>`<td>${dayHours(u.id,d)?hm(dayHours(u.id,d)):'—'}</td>`).join('')}<td><b>${hm(total)}</b></td></tr>`}).join('')}</tbody></table></div></div>`
+}
+function bonuses(){
+ if(session.role!=='management')return;
+ let emps=db.users.filter(x=>x.role==='employee');
+ $('main').innerHTML=`<div class="title"><div><h2>Bonuses</h2><div class="muted">Management only — assign or update employee bonuses.</div></div></div><div class="card"><div class="table-wrap"><table><thead><tr><th>Employee</th><th>Status</th><th>This Week Bonus</th><th>Action</th></tr></thead><tbody>${emps.map(u=>`<tr><td><b>${esc(u.name)}</b><br><span class="muted">${esc(u.username)}</span></td><td>${statusBadge(employeeStatus(u))}</td><td><b>Rs ${Number(u.weeklyBonus||u.bonus||0).toLocaleString()}</b></td><td><button class="green" onclick="setBonus('${u.id}')">Set / Edit Bonus</button></td></tr>`).join('')}</tbody></table></div></div>`;
+}
+function setBonus(id){
+ let u=db.users.find(x=>x.id===id); if(!u)return;
+ $('modalCard').innerHTML=`<div class="modal-head"><h3>Bonus — ${esc(u.name)}</h3><button class="secondary" onclick="closeModal()">✕</button></div>
+ <label>This Week Bonus Amount (Rs)</label>
+ <input id="bonusAmount" type="number" min="0" step="1" value="${Number(u.weeklyBonus||u.bonus||0)}" placeholder="Enter bonus amount">
+ <div class="actions" style="margin-top:16px">
+  <button class="green" onclick="saveBonus('${u.id}')">Save Bonus</button>
+  <button class="secondary" onclick="closeModal()">Cancel</button>
+ </div>`;
+ $('modal').classList.remove('hidden');
+ setTimeout(()=>{let e=$('bonusAmount');if(e){e.focus();e.select();}},50);
+}
+function saveBonus(id){
+ let u=db.users.find(x=>x.id===id); if(!u)return;
+ let value=Number($('bonusAmount').value);
+ if(!Number.isFinite(value)||value<0){alert('Please enter a valid bonus amount.');return}
+ u.weeklyBonus=value; u.bonus=value; save(); closeModal(); toast('Bonus updated successfully'); render();
+}
+
+function openEmployee(id=''){
+ if(session.role!=='management'){toast('Only management can add or edit employees');return;}
+ let u=db.users.find(x=>x.id===id);
+ $('modalCard').innerHTML=`<div class="modal-head"><h3>${u?'Edit Employee':'Add Employee'}</h3><button class="secondary" onclick="closeModal()">✕</button></div>
+ <form id="empForm"><input type="hidden" id="eid" value="${u?.id||''}"><label>Full Name</label><input id="ename" required value="${esc(u?.name||'')}"><label>Username</label><input id="euser" required value="${esc(u?.username||'')}"><label>Password</label><input id="epass" required value="${esc(u?.password||'')}"><label>Status</label><select id="estatus"><option value="inactive" ${u?.status==='inactive'?'selected':''}>Inactive</option><option value="active" ${!u||u?.status==='active'?'selected':''}>Active</option><option value="most" ${u?.status==='most'?'selected':''}>Most Active</option></select><button style="width:100%;margin-top:18px">${u?'Save Changes':'Create Employee'}</button></form>`;
+ $('modal').classList.remove('hidden');
+ $('empForm').onsubmit=e=>{e.preventDefault();let old=$('eid').value,username=$('euser').value.trim();if(db.users.some(x=>x.username.toLowerCase()===username.toLowerCase()&&x.id!==old)){alert('Username already exists');return}
+  if(old){
+   let x=db.users.find(x=>x.id===old);
+   if(x){
+    Object.assign(x,{
+     name:$('ename').value.trim(),
+     username,
+     password:$('epass').value,
+     status:$('estatus').value
+    });
+   }
+  } else {
+   db.users.push({
+    id:'EMP'+Date.now(),
+    name:$('ename').value.trim(),
+    username,
+    password:$('epass').value,
+    role:'employee',
+    bonus:0,
+    status:$('estatus').value,
+    warnings:[],
+    strikes:[]
+   });
+  }
+  save();closeModal();toast(old?'Employee updated':'Employee created');render();
+ }
+}
+
+function statusTable(){
+ let emps=db.users.filter(x=>x.role==='employee');
+ return `<div class="table-wrap"><table><thead><tr><th>Employee</th><th>Status</th><th>Strikes</th><th>Warnings</th><th>Management Action</th></tr></thead><tbody>${emps.map(u=>`<tr><td><b>${esc(u.name)}</b><br><span class="muted">${esc(u.username)}</span></td><td>
+ <select onchange="changeEmployeeStatus('${u.id}',this.value)">
+  <option value="inactive" ${u.status==='inactive'?'selected':''}>Inactive</option>
+  <option value="active" ${u.status==='active'||!u.status?'selected':''}>Active</option>
+  <option value="most" ${u.status==='most'?'selected':''}>Most Active</option>
+ </select>
+</td><td>${strikeCount(u)}</td><td>${warningCount(u)}</td><td><button class="secondary" onclick="disciplineEmployee('${u.id}')">Manage</button></td></tr>`).join('')}</tbody></table></div>`
+}
+function changeEmployeeStatus(id,value){
+ let u=db.users.find(x=>String(x.id)===String(id));
+ if(!u)return;
+ if(!['inactive','active','most'].includes(value))return;
+ u.status=value;
+ save();
+ toast('Status updated successfully');
+ page='employees';
+ render();
+}
+function discipline(){
+ $('main').innerHTML=`<div class="title"><div><h2>Strikes & Warnings</h2><div class="muted">Management only — give warnings, strikes and change employee status.</div></div></div><div class="card">${statusTable()}</div>`;
+}
+function disciplineEmployee(id){
+ let u=db.users.find(x=>x.id===id);if(!u)return;
+ if(!Array.isArray(u.warnings))u.warnings=[];
+ if(!Array.isArray(u.strikes))u.strikes=[];
+ $('modalCard').innerHTML=`<div class="modal-head"><h3>Manage ${esc(u.name)}</h3><button class="secondary" onclick="closeModal()">✕</button></div>
+ <label>Employee Status</label>
+ <select id="dstatus">
+  <option value="inactive" ${u.status==='inactive'?'selected':''}>Inactive</option>
+  <option value="active" ${u.status==='active'||!u.status?'selected':''}>Active</option>
+  <option value="most" ${u.status==='most'?'selected':''}>Most Active</option>
+ </select>
+ <div class="actions" style="margin-top:16px">
+  <button class="green" onclick="saveStatus('${u.id}')">Save Status</button>
+ </div>
+ <label>Warning Reason</label>
+ <input id="warningReason" placeholder="Enter warning reason">
+ <button class="secondary" style="width:100%;margin-top:10px" onclick="addWarningFromModal('${u.id}')">+ Give Warning</button>
+ <label>Strike Reason</label>
+ <input id="strikeReason" placeholder="Enter strike reason">
+ <button class="danger" style="width:100%;margin-top:10px" onclick="addStrikeFromModal('${u.id}')">+ Give Strike</button>
+ <div class="note"><b>Warnings:</b> ${warningCount(u)} &nbsp; <b>Strikes:</b> ${strikeCount(u)}</div>
+ <div style="margin-top:16px">
+  ${u.warnings.length?'<h4>Warnings</h4>'+u.warnings.map((x,i)=>`<div class="note warning"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><span>Warning ${i+1}: ${esc(x.reason||x)}${x.date?`<div class="muted">${esc(x.date)}</div>`:''}</span><button type="button" class="danger" onclick="removeWarning('${u.id}',${i})">Remove</button></div></div>`).join(''):''}
+  ${u.strikes.length?'<h4 style="margin-top:16px">Strikes</h4>'+u.strikes.map((x,i)=>`<div class="note strike"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><span>Strike ${i+1}: ${esc(x.reason||x)}${x.date?`<div class="muted">${esc(x.date)}</div>`:''}</span><button type="button" class="danger" onclick="removeStrike('${u.id}',${i})">Remove</button></div></div>`).join(''):''}
+ </div>`;
+ $('modal').classList.remove('hidden');
+}
+function saveStatus(id){
+ let u=db.users.find(x=>String(x.id)===String(id));
+ if(!u)return;
+ let s=$('dstatus')?.value;
+ if(!['inactive','active','most'].includes(s)){toast('Please select a valid status');return;}
+ u.status=s;
+ save();
+ toast('Status updated successfully');
+ closeModal();
+ page='discipline';
+ render();
+}
+function addWarningFromModal(id){
+ let u=db.users.find(x=>x.id===id); if(!u)return;
+ if(!Array.isArray(u.warnings))u.warnings=[];
+ let text=$('warningReason').value.trim();
+ if(!text){alert('Please enter a warning reason.');return}
+ u.warnings.push({reason:text,date:new Date().toLocaleString()}); save(); toast('Warning added successfully'); disciplineEmployee(id);
+}
+function addStrikeFromModal(id){
+ let u=db.users.find(x=>x.id===id); if(!u)return;
+ if(!Array.isArray(u.strikes))u.strikes=[];
+ let text=$('strikeReason').value.trim();
+ if(!text){alert('Please enter a strike reason.');return}
+ u.strikes.push({reason:text,date:new Date().toLocaleString()}); save(); toast('Strike added successfully'); disciplineEmployee(id);
+}
+
+function myInfo(){
+ let u=currentUser();
+ if(!u||u.role!=='employee')return;
+ if(!Array.isArray(u.warnings))u.warnings=[];
+ if(!Array.isArray(u.strikes))u.strikes=[];
+ let wb=Number(u.weeklyBonus||u.bonus||0);
+ $('main').innerHTML=`<div class="title"><div><h2>My Bonus & Discipline</h2><div class="muted">Only you can view your own bonus, warnings and strikes.</div></div></div>
+ <div class="grid"><div class="card"><div class="muted">This Week Bonus</div><div class="stat greenText">Rs ${wb.toLocaleString()}</div></div><div class="card"><div class="muted">Warnings</div><div class="stat">${u.warnings.length}</div></div><div class="card"><div class="muted">Strikes</div><div class="stat redText">${u.strikes.length}</div></div><div class="card"><div class="muted">My Status</div><div class="stat" style="font-size:18px">${statusBadge(employeeStatus(u))}</div></div></div>
+ <div class="card" style="margin-top:18px"><h3>My Warnings</h3>${u.warnings.length?u.warnings.map((x,i)=>`<div class="note warning"><b>Warning ${i+1}</b><br>${esc(x.reason||x)}${x.date?`<div class="muted">${esc(x.date)}</div>`:''}</div>`).join(''):'<div class="note">No warnings.</div>'}</div>
+ <div class="card" style="margin-top:18px"><h3>My Strikes</h3>${u.strikes.length?u.strikes.map((x,i)=>`<div class="note strike"><b>Strike ${i+1}</b><br>${esc(x.reason||x)}${x.date?`<div class="muted">${esc(x.date)}</div>`:''}</div>`).join(''):'<div class="note">No strikes.</div>'}</div>`;
+}
+function removeWarning(id,index){
+ let u=db.users.find(x=>String(x.id)===String(id)); if(!u||!Array.isArray(u.warnings)||!u.warnings[index])return;
+ u.warnings.splice(index,1); save(); toast('Warning removed'); disciplineEmployee(id);
+}
+function removeStrike(id,index){
+ let u=db.users.find(x=>String(x.id)===String(id)); if(!u||!Array.isArray(u.strikes)||!u.strikes[index])return;
+ u.strikes.splice(index,1); save(); toast('Strike removed'); disciplineEmployee(id);
+}
+function closeModal(){$('modal').classList.add('hidden')}
+function deleteEmployee(id){
+ let u=db.users.find(x=>String(x.id)===String(id));
+ if(!u||u.role!=='employee'){toast('Employee not found');return false;}
+ db.users=db.users.filter(x=>String(x.id)!==String(id));
+ db.attendance=db.attendance.filter(x=>String(x.userId)!==String(id));
+ save(); toast('Employee deleted successfully'); page='employees'; render(); return false;
+}
+function checkIn(){
+ let u=currentUser(),d=dateKey();
+ if(openSession(u.id,d)){toast('Already checked in');return}
+ db.attendance.push({userId:u.id,date:d,checkIn:iso(now()),checkOut:null});save();toast('Checked in successfully');render();
+}
+function checkOut(){
+ let u=currentUser(),d=dateKey(),a=openSession(u.id,d);
+ if(!a){toast('Please check in first');return}
+ a.checkOut=iso(now());save();toast('Checked out successfully');render();
+}
+$('loginForm').onsubmit=e=>{e.preventDefault();let u=db.users.find(x=>x.username===$('loginUser').value.trim()&&x.password===$('loginPass').value);if(!u){$('loginError').textContent='Invalid username or password';$('loginError').classList.remove('hidden');return}session={id:u.id,role:u.role};page='dashboard';$('loginError').classList.add('hidden');render()}
+$('logout').onclick=()=>{session=null;render()}
+$('modal').onclick=e=>{if(e.target.id==='modal')closeModal()}
+render();
+</script>
+</body>
+</html>
